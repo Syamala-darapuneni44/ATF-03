@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather API Interface</title>
+
+    <!-- Custom Bootstrap - Start -->
+    <link href="https://unpkg.com/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #e3f2fd;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.5s ease;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            transition: color 0.5s ease;
+        }
+
+        h1 {
+            color: #2196f3;
+            margin-bottom: 20px;
+            font-family: 'Roboto', sans-serif;
+            font-weight: bold;
+        }
+
+        #city-input {
+            border-radius: 20px;
+            border: 2px solid #2196f3;
+            padding-left: 20px;
+        }
+
+        #get-weather-btn {
+            border-radius: 20px;
+            background-color: #2196f3;
+            border: none;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        #get-weather-btn:hover {
+            background-color: #0d8bf2;
+        }
+
+        #weather-info {
+            margin-top: 30px;
+            display: none;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f1f5f9;
+            border: 1px solid #e1e9f0;
+            text-align: center;
+        }
+
+        #weather-info h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            transition: color 0.5s ease;
+        }
+
+        .weather-details {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .weather-item {
+            background: #ffffff;
+            border: 1px solid #2196f3;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            flex: 1 0 30%;
+            transition: transform 0.3s;
+        }
+
+        .weather-item:hover {
+            transform: scale(1.05);
+        }
+
+        .weather-item i {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .weather-item p {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        #city-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            transition: color 0.5s ease;
+        }
+
+        .temp {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Default color */
+        .sunny {
+            color: #ffeb3b;
+            background-color: #fff3e0;
+        }
+
+        .rainy {
+            color: #2196f3;
+            background-color: #e3f2fd;
+        }
+
+        .stormy {
+            color: #ffffff;
+            background-color: #607d8b;
+        }
+
+        .snowy {
+            color: #ffffff;
+            background-color: #b3e5fc;
+        }
+
+        .cloudy {
+            color: #9e9e9e;
+            background-color: #f5f5f5;
+        }
+
+        .weather-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+        }
+    </style>
+    <!-- Custom Bootstrap - End -->
+
+    <!-- OpenWeatherMap Icons - Official Weather Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center">Weather API Interface</h1>
+        <div class="input-group mb-3">
+            <input type="text" id="city-input" class="form-control" placeholder="Enter city name">
+            <button class="btn btn-primary" type="button" id="get-weather-btn" onclick="getWeather()">Get
+                Weather</button>
+        </div>
+        <div id="weather-info">
+            <h2 id="city-name"></h2>
+            <img id="weather-icon" class="weather-icon" src="" alt="Weather Icon">
+            <div class="weather-details">
+                <div class="weather-item">
+                    <i class="fas fa-cloud-sun"></i>
+                    <p id="weather-description"></p>
+                </div>
+                <div class="weather-item">
+                    <i class="fas fa-temperature-high"></i>
+                    <p id="temperature" class="temp"></p>
+                </div>
+                <div class="weather-item">
+                    <i class="fas fa-tint"></i>
+                    <p id="humidity"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and necessary Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const apiKey = 'cfa4b853ae6310ca5d849be7a70e17fe'; // OpenWeatherMap API Key
+
+        async function getWeather() {
+            const cityInput = document.getElementById('city-input');
+            const weatherInfo = document.getElementById('weather-info');
+            const city = cityInput.value;
+            const body = document.body;
+            const container = document.querySelector('.container');
+
+            if (!city) {
+                alert('Please enter a city name.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`);
+                const data = await response.json();
+
+                if (data.cod === '404') {
+                    alert('City not found. Please try again.');
+                    return;
+                }
+
+                const weather = data.weather[0];
+                const temp = data.main.temp;
+                const humidity = data.main.humidity;
+                const iconCode = weather.icon;
+                const description = weather.description.toLowerCase();
+
+                document.getElementById('city-name').textContent = `Weather in ${city}`;
+                document.getElementById('weather-description').textContent = weather.description;
+                document.getElementById('temperature').textContent = `${temp}°C`;
+                document.getElementById('humidity').textContent = `${humidity}%`;
+
+                // Set the weather icon
+                document.getElementById('weather-icon').src = `http://openweathermap.org/img/wn/${iconCode}@2x.png`;
+                document.getElementById('weather-icon').alt = weather.description;
+
+                // Determine theme colors based on weather conditions
+                let weatherClass = 'cloudy';
+                if (description.includes('clear') || description.includes('sunny')) {
+                    weatherClass = 'sunny';
+                } else if (description.includes('rain') || description.includes('drizzle')) {
+                    weatherClass = 'rainy';
+                } else if (description.includes('storm') || description.includes('thunderstorm')) {
+                    weatherClass = 'stormy';
+                } else if (description.includes('snow')) {
+                    weatherClass = 'snowy';
+                }
+
+                // Update colors dynamically
+                container.classList.add(weatherClass);
+                body.style.backgroundColor = getComputedStyle(container).backgroundColor;
+                document.getElementById('city-name').classList.add(weatherClass);
+                document.getElementById('weather-info').style.display = 'block';
+
+            } catch (error) {
+                alert('An error occurred. Please try again later.');
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>
