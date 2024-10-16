@@ -3,139 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake Game</title>
+    <title>To Do List</title>
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh; /* Full viewport height */
-            margin: 0; /* Remove default margin */
-            background-color: black; /* Background color for the body */
+            background-color: #f8f9fa;
         }
-
-        #gameCanvas {
-            background-color: #333; /* Darker background for the canvas */
-            border: 2px solid white; /* Add a border for better visibility */
+        
+        header {
+            background-color: #007bff;
+        }
+        
+        h1 {
+            font-family: 'Comic Sans MS', sans-serif;
+            color: #fff;
+        }
+        
+        #addForm .form-control {
+            font-size: 1.2rem;
+        }
+        
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-success, .btn-danger {
+            margin-left: 10px;
+        }
+        
+        #lblsuccess {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+            text-align: center;
+        }
+        
+        .card-header {
+            font-size: 1.5rem;
         }
     </style>
 </head>
 <body>
+    <header class="bg-primary text-white text-center p-4">
+        <div class="container">
+            <h1 class="display-4 font-weight-bold">Task Manager</h1>
+            <p class="lead">Organize your tasks efficiently</p>
+        </div>
+    </header>
+    <div class="container mt-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h3 class="card-title">Add New Task</h3>
+            </div>
+            <div class="card-body">
+                <label id="lblsuccess" class="text-success" style="display: none;"></label>
+                <form id="addForm">
+                    <div class="form-row">
+                        <div class="col-md-8">
+                            <input type="text" onkeyup="toggleButton(this, 'submit')" class="form-control" id="item" placeholder="Enter your task here...">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="submit" class="btn btn-success btn-block" id="submit" value="Add Task" disabled>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-<canvas id="gameCanvas" width="400" height="400"></canvas>
+        <h3 class="mt-4">Task List</h3>
+        <ul class="list-group" id="items"></ul>
+    </div>
 
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    const box = 20;
-    let snake = [];
-    snake[0] = { x: 9 * box, y: 10 * box };
-
-    let food = {
-        x: Math.floor(Math.random() * 19 + 1) * box,
-        y: Math.floor(Math.random() * 19 + 1) * box
-    };
-
-    let d = 'RIGHT';
-    let score = 0;
-    let highScore = localStorage.getItem('highScore') ? localStorage.getItem('highScore') : 0;
-    let gameOverMessage = "";
-    let game = null;
-
-    // Automatically start the game
-    window.onload = function() {
-        game = setInterval(draw, 150); // Draw the game at a 150ms interval
-    };
-
-    document.addEventListener('keydown', direction);
-
-    function direction(event) {
-        if (event.keyCode === 37 && d !== 'RIGHT') d = 'LEFT';
-        else if (event.keyCode === 38 && d !== 'DOWN') d = 'UP';
-        else if (event.keyCode === 39 && d !== 'LEFT') d = 'RIGHT';
-        else if (event.keyCode === 40 && d !== 'UP') d = 'DOWN';
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        for (let i = 0; i < snake.length; i++) {
-            ctx.fillStyle = (i === 0) ? 'green' : 'white'; // Head green, body white
-            ctx.fillRect(snake[i].x, snake[i].y, box, box);
-            ctx.strokeStyle = 'red';
-            ctx.strokeRect(snake[i].x, snake[i].y, box, box);
-        }
-
-        ctx.fillStyle = 'red';
-        ctx.fillRect(food.x, food.y, box, box);
-
-        let snakeX = snake[0].x;
-        let snakeY = snake[0].y;
-
-        if (d === 'LEFT') snakeX -= box;
-        if (d === 'UP') snakeY -= box;
-        if (d === 'RIGHT') snakeX += box;
-        if (d === 'DOWN') snakeY += box;
-
-        if (snakeX === food.x && snakeY === food.y) {
-            score++;
-            food = {
-                x: Math.floor(Math.random() * 19 + 1) * box,
-                y: Math.floor(Math.random() * 19 + 1) * box
-            };
-        } else {
-            snake.pop();
-        }
-
-        const newHead = {
-            x: snakeX,
-            y: snakeY
+    <script>
+        window.onload = () => {
+            const form1 = document.querySelector("#addForm");
+            let items = document.getElementById("items");
+            let submit = document.getElementById("submit");
+            let editItem = null;
+            form1.addEventListener("submit", addItem);
+            items.addEventListener("click", removeItem);
         };
 
-        if (snakeX < 0 || snakeY < 0 || snakeX >= canvas.width || snakeY >= canvas.height || collision(newHead, snake)) {
-            clearInterval(game);
-
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('highScore', highScore);
-                gameOverMessage = "New High Score!";
-            } else {
-                gameOverMessage = "Game Over";
+        function addItem(e) {
+            e.preventDefault();
+            if (submit.value !== "Add Task") {
+                editItem.target.parentNode.childNodes[0].data = document.getElementById("item").value;
+                submit.value = "Add Task";
+                document.getElementById("item").value = "";
+                document.getElementById("lblsuccess").innerHTML = "Task updated successfully!";
+                document.getElementById("lblsuccess").style.display = "block";
+                setTimeout(function () {
+                    document.getElementById("lblsuccess").style.display = "none";
+                }, 3000);
+                return false;
             }
 
-            displayEndScreen();
-            return;
+            let newItem = document.getElementById("item").value;
+            if (newItem.trim() === "" || newItem.trim() === null) return false;
+            
+            document.getElementById("item").value = "";
+            let li = document.createElement("li");
+            li.className = "list-group-item";
+            
+            let deleteButton = document.createElement("button");
+            deleteButton.className = "btn-danger btn btn-sm float-right delete";
+            deleteButton.appendChild(document.createTextNode("Delete"));
+
+            let editButton = document.createElement("button");
+            editButton.className = "btn-success btn btn-sm float-right edit";
+            editButton.appendChild(document.createTextNode("Edit"));
+
+            li.appendChild(document.createTextNode(newItem));
+            li.appendChild(deleteButton);
+            li.appendChild(editButton);
+            items.appendChild(li);
         }
 
-        snake.unshift(newHead);
-
-        ctx.fillStyle = "white";
-        ctx.font = "20px Arial";
-        ctx.fillText("Score: " + score, box, 1.5 * box);
-        ctx.fillText("High Score: " + highScore, box, 3 * box);
-    }
-
-    function collision(newHead, snake) {
-        for (let i = 0; i < snake.length; i++) {
-            if (newHead.x === snake[i].x && newHead.y === snake[i].y) {
-                return true;
+        function removeItem(e) {
+            e.preventDefault();
+            if (e.target.classList.contains("delete")) {
+                if (confirm("Are you sure you want to delete this task?")) {
+                    let li = e.target.parentNode;
+                    items.removeChild(li);
+                    document.getElementById("lblsuccess").innerHTML = "Task removed successfully!";
+                    document.getElementById("lblsuccess").style.display = "block";
+                    setTimeout(function () {
+                        document.getElementById("lblsuccess").style.display = "none";
+                    }, 3000);
+                }
+            }
+            if (e.target.classList.contains("edit")) {
+                document.getElementById("item").value = e.target.parentNode.childNodes[0].data;
+                submit.value = "Update Task";
+                editItem = e;
             }
         }
-        return false;
-    }
 
-    function displayEndScreen() {
-        ctx.fillStyle = "white";
-        ctx.font = "20px Arial";
-        ctx.fillText(gameOverMessage, canvas.width / 4, canvas.height / 2 - 20);
-
-        ctx.fillStyle = "white";
-        ctx.font = "20px Arial";
-        ctx.fillText("Your Score: " + score, canvas.width / 4, canvas.height / 2 + 20);
-        ctx.fillText("High Score: " + highScore, canvas.width / 4, canvas.height / 2 + 50);
-    }
-</script>
-
+        function toggleButton(ref, btnID) {
+            document.getElementById(btnID).disabled = false;
+        }
+    </script>
 </body>
 </html>
+
